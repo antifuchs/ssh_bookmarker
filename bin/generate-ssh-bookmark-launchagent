@@ -49,8 +49,14 @@ USAGE
 </plist>
 PLIST
     end
-    puts "Wrote #{filename}"
-    puts "Now run: launchctl load #{filename}"
+    puts <<-STATUS
+Wrote #{filename}
+
+Now run:
+
+    launchctl unload #{filename}
+    launchctl load #{filename}
+STATUS
   end
 
   def sanity_checks
