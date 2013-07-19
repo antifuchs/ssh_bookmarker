@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require 'ssh_bookmarker'
+
+cli = SSHBookmarker::CLI.new
+cli.parse_options
+cli.run
