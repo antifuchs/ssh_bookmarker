@@ -3,6 +3,10 @@ require 'optparse'
 
 module SSHBookmarker
   class CLI
+    attr_accessor :hosts_files
+    attr_accessor :config_files
+    attr_accessor :dir
+
     def initialize
       @hosts_files = SSHBookmarker::Parser::DEFAULT_KNOWN_HOSTS_FILES
       @config_files = SSHBookmarker::Parser::DEFAULT_CONFIG_FILES
@@ -13,9 +17,9 @@ module SSHBookmarker
       @debug_level = Logger::WARN
     end
 
-    def parse_options(args=ARGV)
-      optparse = OptionParser.new do |opts|
-        opts.banner = <<-USAGE
+    attr_writer :banner
+    def banner
+      @banner || <<-USAGE
 Usage: #{$0} [options] output_dir
 
 This script generates SSH (and, optionally, mosh) bookmarks in
@@ -23,6 +27,11 @@ output_dir.
 
 (Note that patterns can be either substring matches or regexes, if wrapped in //)
 USAGE
+    end
+
+    def parse_options(args=ARGV)
+      optparse = OptionParser.new do |opts|
+        opts.banner = banner
         opts.on('-k', '--known_hosts=FILE', 'Add file to list of known hosts') do |file|
           @hosts_files << file
         end

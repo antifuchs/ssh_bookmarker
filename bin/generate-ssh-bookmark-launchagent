@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'optparse'
+require 'ssh_bookmarker'
+
+class LaunchAgentCreator
+  def run(args)
+    cli = SSHBookmarker::CLI.new
+    cli.banner = <<-USAGE
+Usage: #{$0} [options] output_dir
+
+This script writes a LaunchAgent configuration file that will run
+create-ssh-bookmarks with all the options you pass it, whenever any of
+the SSH known_hosts or config files changes.
+
+When create-ssh-bookmarks is run, the resulting files will be written
+to output_dir.
+USAGE
+    cli.parse_options(args.dup)
+
+    #puts <<-PLIST
+
+    filename = File.expand_path("~/Library/LaunchAgents/net.boinkor.ssh-bookmarker.plist")
+    File.open(filename, 'w') do |f|
+      f.write <<-PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+        <key>Label</key>
+        <string>net.boinkor.ssh-bookmarker</string>
+        <key>ProgramArguments</key>
+        <array>#{program_arguments(args)}</array>
+        <key>QueueDirectories</key>
+        <array/>
+        <key>RunAtLoad</key>
+        <true/>
+        <key>StartCalendarInterval</key>
+        <dict>
+                <key>Hour</key>
+                <integer>0</integer>
+                <key>Minute</key>
+                <integer>0</integer>
+        </dict>
+        <key>WatchPaths</key>
+        <array>#{watch_paths(cli)}</array>
+</dict>
+</plist>
+PLIST
+    end
+    puts "Wrote #{filename}"
+    puts "Now run: launchctl load #{filename}"
+  end
+
+  def make_string_array(elements)
+    '<string>' + elements.join("</string>\n<string>") + '</string>'
+  end
+
+  def program_arguments(args)
+    script_path = File.expand_path('../create-ssh-bookmarks', __FILE__)
+    make_string_array([script_path] + args)
+  end
+
+  def watch_paths(cli)
+    make_string_array(cli.hosts_files + cli.config_files)
+  end
+end
+
+LaunchAgentCreator.new.run(ARGV)# if $0 == __FILE__
