@@ -19,7 +19,7 @@ to output_dir.
 USAGE
     cli.parse_options(args.dup)
 
-    #puts <<-PLIST
+    sanity_checks
 
     filename = File.expand_path("~/Library/LaunchAgents/net.boinkor.ssh-bookmarker.plist")
     File.open(filename, 'w') do |f|
@@ -51,6 +51,14 @@ PLIST
     end
     puts "Wrote #{filename}"
     puts "Now run: launchctl load #{filename}"
+  end
+
+  def sanity_checks
+    if (ENV['RBENV_VERSION'] && ENV['RBENV_VERSION'] != 'system') ||
+      (ENV['RVM_VERSION'] && ENV['RVM_VERSION'] != 'system')
+      $stderr.puts "#{$0} must be run under the 'system' ruby, sorry."
+      exit(1)
+    end
   end
 
   def make_string_array(elements)
