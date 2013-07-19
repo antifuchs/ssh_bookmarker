@@ -1,24 +1,24 @@
-# SshBookmarker
+# Automatically create OS X bookmark files (.webloc) from your SSH config
 
-TODO: Write a gem description
+This set of scripts allows you to automatically create bookmarks for
+all hosts that your SSH knows about. The really cool part is that it
+also includes a LaunchAgent script that re-runs this every time your
+SSH config changes. Include the output dir in your LaunchBar /
+QuickSilver / Alfred config, and you can SSH into hosts without even
+opening Terminal (to type SSH)!
 
 ## Installation
 
-Add this line to your application's Gemfile:
+You have to install it under the system ruby, so run:
 
-    gem 'ssh_bookmarker'
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install ssh_bookmarker
+    $ sudo env RBENV_VERSION=system RVM_VERSION=system gem install ssh_bookmarker
 
 ## Usage
 
-TODO: Write usage instructions here
+You can either use `create-ssh-bookmarks` as a one-off script to
+generate SSH bookmarks in a specific directory, or, if you have found
+a set of command line args that works for you, use those same args
+with `generate-ssh-bookmark-launchagent`.
 
 ## Contributing
 
