@@ -34,13 +34,13 @@ module SSHBookmarker
           logger.info("Skipping missing SSH config file #{path}")
           next
         end
-        parse_ssh_config(path) do |hostname, url_scheme|
+        parse_ssh_config(path) do |hostnames, url_scheme|
           if @protocol_override
-            (@protocol_override.call(hostname, url_scheme) || [url_scheme]).each do |scheme|
-              make_webloc(hostname, nil, scheme)
+            (@protocol_override.call(hostnames, url_scheme) || [url_scheme]).each do |scheme|
+              hostnames.each { |hostname| make_webloc(hostname, nil, scheme) }
             end
           else
-            make_webloc(hostname, nil, url_scheme)
+            hostnames.each { |hostname| make_webloc(hostname, nil, url_scheme) }
           end
         end
       end
@@ -67,7 +67,7 @@ module SSHBookmarker
             port = ported_host_match[2]
             yield(host, port)
           else
-            yield(hostname) unless hostname.match(/ /) || hostname.match(/^[\[]/)  || hostname.match(/^[0-9\.]+$/) || hostname.match(/^[a-f0-9\:]+(%.*)?$/)
+            yield([hostname]) unless hostname.match(/ /) || hostname.match(/^[\[]/)  || hostname.match(/^[0-9\.]+$/) || hostname.match(/^[a-f0-9\:]+(%.*)?$/)
           end
         end
       end
@@ -82,10 +82,8 @@ module SSHBookmarker
           url_schemes = extract_url_scheme($2)
           hosts = host_spec.split(/\s+/)
           logger.debug("Got hosts #{hosts.inspect}")
-          hosts.each do |host|
-            url_schemes.each do |url_scheme|
-              yield(host, nil, url_scheme) unless host.match /\*/
-            end
+          url_schemes.each do |url_scheme|
+            yield(hosts, nil, url_scheme) unless hosts.any?{ |hn| hn.match(/\*/) }
           end
         end
       end

@@ -47,6 +47,7 @@ USAGE
         opts.on('-M PATTERN', '--prevent-mosh=PATTERN', 'Prevent emitting a mosh bookmark for host names matching PATTERN') do |pattern|
           @mosh_negative_domain_patterns << to_match_expr(pattern)
         end
+
         opts.on('-v', '--verbose', 'More debug chunder') do
           @debug_level -= 1
         end
@@ -76,9 +77,9 @@ USAGE
       parser.logger = logger
 
       if @mosh_positive_domain_patterns.length > 0
-        parser.protocol_override = proc do |hostname, url_scheme|
-          if @mosh_positive_domain_patterns.find {|pattern| hostname.match(pattern)} &&
-              !@mosh_negative_domain_patterns.find {|pattern| hostname.match(pattern)}
+        parser.protocol_override = proc do |hostnames, url_scheme|
+          if @mosh_positive_domain_patterns.find {|pattern| hostnames.any?{ |hn| hn.match(pattern) }} &&
+              !@mosh_negative_domain_patterns.find {|pattern| hostnames.any?{ |hn| hn.match(pattern) }}
             ['mosh']
           end
         end
