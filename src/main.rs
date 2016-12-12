@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use std::io;
 use std::io::BufReader;
 use std::io::BufRead;
+use std::io::prelude::*;
 use std::fs::File;
 
 // use quick_error::ResultExt;
@@ -48,6 +49,35 @@ impl Host {
             protocol: "ssh".to_string(),
         }
     }
+
+    fn write_bookmark(&self, dir: &Path) -> Result<(), Error> {
+        let name = format!("{} ({}).webloc", self.name, self.protocol);
+        let namepart = Path::new(&name);
+
+        let mut path = PathBuf::from(dir);
+        if namepart.is_absolute() {
+            return Err(Error::NameError(self.name.to_string(), self.protocol.to_string()));
+        }
+        path.push(namepart);
+
+        let mut bookmark_text = String::new();
+        bookmark_text.push_str(self.protocol.as_str());
+        bookmark_text.push_str("://");
+        bookmark_text.push_str(self.name.as_str());
+        let bookmark = format!(r#"<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict><key>URL</key><string>{}</string></dict></plist>
+"#,
+                               bookmark_text);
+
+        let mut f = try!(File::create(path));
+        try!(f.write_all(bookmark.as_bytes()));
+        Ok(())
+    }
+
+    fn ineligible(&self) -> bool {
+        self.name.contains('*') || self.name.contains('?')
+    }
 }
 
 quick_error! {
@@ -57,6 +87,9 @@ quick_error! {
             // context(path: &'a Path, lineno: usize, line: &'a str)
             //     -> (path.to_path_buf(), lineno, line.to_string())
             display("{} line {}: {:?}", path.to_str().unwrap_or("(unprintable path)"), lineno, line)
+        }
+        NameError(name: String, protocol: String) {
+            display("{} with protocol {} would result in a bad filename", name, protocol)
         }
         IO(err: io::Error) {
             from()
@@ -139,14 +172,30 @@ fn create_known_hosts_entries<'a>(pathname: &Path) -> Result<Vec<Host>, Error>{
 fn main() {
     let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
     if args.cmd_create {
-        let known_hosts: Vec<Host> = args.flag_known_hosts.iter().flat_map (|kh| {
+        let mut hosts: Vec<Host> = args.flag_known_hosts.iter().flat_map (|kh| {
             create_known_hosts_entries(Path::new(kh)).unwrap()
         }).collect();
         let config_hosts: Vec<Host> = args.flag_config.iter().flat_map (|conf| {
             create_config_entries(Path::new(conf)).unwrap()
         }).collect();
-        println!("known hosts: {:?}", known_hosts);
-        println!("ssh config: {:?}", config_hosts);
+        hosts.extend(config_hosts);
+
+        let output = Path::new(&args.arg_output);
+        match std::fs::remove_dir_all(output) {
+            Ok(()) => {},
+            Err(e) => {
+                if e.kind() != std::io::ErrorKind::NotFound {
+                    panic!("Could not clear output directory: {}", e)
+                }
+            }
+        }
+        std::fs::create_dir_all(output).unwrap();
+        for kh in hosts {
+            if kh.ineligible() {
+                continue;
+            }
+            kh.write_bookmark(output).unwrap();
+        }
     } else {
         panic!("I don't understand what {:?} should do", args)
     }
