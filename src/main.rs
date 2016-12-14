@@ -5,7 +5,7 @@ extern crate ssh_bookmarker;
 use std::path::Path;
 use docopt::Docopt;
 
-use ssh_bookmarker::{Host, ConfigFile};
+use ssh_bookmarker::process;
 use ssh_bookmarker::{ssh_config, known_hosts};
 
 // use quick_error::ResultExt;
@@ -37,9 +37,8 @@ fn main() {
                             .and_then(|d| d.decode())
                             .unwrap_or_else(|e| e.exit());
     if args.cmd_create {
-        let mut hosts: Vec<Host> = args.flag_known_hosts.iter().flat_map(|kh| known_hosts::KnownHosts::new(Path::new(kh)).entries().unwrap()).collect();
-        let config_hosts: Vec<Host> = args.flag_config.iter().flat_map(|kh| ssh_config::SSHConfigFile::new(Path::new(kh)).entries().unwrap()).collect();
-        hosts.extend(config_hosts);
+        let mut hosts = process::<known_hosts::KnownHosts>(args.flag_known_hosts).unwrap();
+        hosts.extend(process::<ssh_config::SSHConfigFile>(args.flag_config).unwrap());
         hosts.sort();
         hosts.dedup();
 

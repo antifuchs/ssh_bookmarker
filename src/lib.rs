@@ -79,16 +79,28 @@ impl Host {
     }
 }
 
-pub trait ConfigFile<'a> {
-    fn pathname(&'a self) -> &'a Path;
+pub trait ConfigFile {
+    fn pathname<'a>(&'a self) -> &'a Path;
 
-    fn parse_entries<R: BufRead>(&'a self, r: R) -> Result<Vec<Host>, Error>;
+    fn parse_entries<R: BufRead>(&self, r: R) -> Result<Vec<Host>, Error>;
 
-    fn entries(&'a self) -> Result<Vec<Host>, Error> {
+    fn entries(&self) -> Result<Vec<Host>, Error> {
         let f = try!(File::open(self.pathname()));
         let file = BufReader::new(&f);
         self.parse_entries(file)
     }
+}
+
+pub fn process<T>(pathnames: Vec<String>) -> Result<Vec<Host>, Error>
+    where T: From<PathBuf> + ConfigFile {
+
+    let mut hosts: Vec<Host> = vec![];
+    for pn in pathnames {
+        let path = PathBuf::from(pn);
+        let file = T::from(path);
+        hosts.extend(try!(file.entries()));
+    }
+    Ok(hosts)
 }
 
 #[test]

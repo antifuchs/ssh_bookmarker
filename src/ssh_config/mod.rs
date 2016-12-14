@@ -6,20 +6,20 @@ pub struct SSHConfigFile {
     pathname: PathBuf
 }
 
-impl SSHConfigFile {
-    pub fn new(path: &Path) -> SSHConfigFile {
+impl From<PathBuf> for SSHConfigFile {
+    fn from(path: PathBuf) -> SSHConfigFile {
         SSHConfigFile{
-            pathname: path.to_path_buf()
+            pathname: path
         }
     }
 }
 
-impl<'a> ConfigFile<'a> for SSHConfigFile {
-    fn pathname(&'a self) -> &'a Path {
+impl ConfigFile for SSHConfigFile {
+    fn pathname<'a>(&'a self) -> &'a Path {
         self.pathname.as_path()
     }
 
-    fn parse_entries<R: BufRead>(&'a self, file: R) -> Result<Vec<Host>, Error> {
+    fn parse_entries<R: BufRead>(&self, file: R) -> Result<Vec<Host>, Error> {
         let mut hosts: Vec<Host> = vec!();
         for maybe_line in file.lines() {
             let line = try!(maybe_line);
@@ -49,6 +49,6 @@ impl<'a> ConfigFile<'a> for SSHConfigFile {
 
 #[test]
 fn test_ssh_config() {
-    let c = SSHConfigFile::new(Path::new("/tmp"));
+    let c = SSHConfigFile::from(PathBuf::from("/tmp"));
     assert_eq!(c.pathname(), Path::new("/tmp"));
 }
