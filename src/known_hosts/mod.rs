@@ -6,20 +6,20 @@ pub struct KnownHosts {
     pathname: PathBuf
 }
 
-impl KnownHosts {
-    pub fn new(path: &Path) -> KnownHosts {
+impl From<PathBuf> for KnownHosts {
+    fn from(path: PathBuf) -> KnownHosts {
         KnownHosts{
-            pathname: path.to_path_buf()
+            pathname: path
         }
     }
 }
 
-impl<'a> ConfigFile<'a> for KnownHosts {
-    fn pathname(&'a self) -> &'a Path {
+impl ConfigFile for KnownHosts {
+    fn pathname<'a>(&'a self) -> &'a Path {
         self.pathname.as_path()
     }
 
-    fn parse_entries<R: BufRead>(&'a self, file: R) -> Result<Vec<Host>, Error> {
+    fn parse_entries<R: BufRead>(&self, file: R) -> Result<Vec<Host>, Error> {
         let mut hosts: Vec<Host> = vec!();
         for (lineno, maybe_line) in file.lines().enumerate() {
             let line = try!(maybe_line);
