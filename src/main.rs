@@ -33,7 +33,7 @@ struct Args {
     flag_known_hosts: Vec<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Host {
     name: String,
     protocol: String,
@@ -181,6 +181,8 @@ fn main() {
             create_config_entries(Path::new(conf)).unwrap()
         }).collect();
         hosts.extend(config_hosts);
+        hosts.sort();
+        hosts.dedup();
 
         let output = Path::new(&args.arg_output);
         match std::fs::remove_dir_all(output) {
