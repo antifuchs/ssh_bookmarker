@@ -1,7 +1,3 @@
-#![feature(plugin)]
-#![plugin(docopt_macros)]
-#![feature(advanced_slice_patterns, slice_patterns)]
-
 extern crate rustc_serialize;
 extern crate docopt;
 #[macro_use] extern crate quick_error;
@@ -9,13 +5,13 @@ extern crate docopt;
 use std::path::{Path, PathBuf};
 use std::io;
 use std::io::BufReader;
-use std::io::BufRead;
 use std::io::prelude::*;
 use std::fs::File;
 
+use docopt::Docopt;
 // use quick_error::ResultExt;
 
-docopt!(Args derive Debug, "
+const USAGE: &'static str = "
 Create SSH bookmarks from known_hosts and ssh_config files.
 
 Usage:
@@ -23,11 +19,19 @@ Usage:
 
 Options:
   -h --help              Show this screen.
-  --version              Show version.
   -v --verbose           Log verbosely.
   -c --config FILE       ssh_config(5) file to read.
   -k --known-hosts FILE  known_hosts file to read.
-");
+";
+
+#[derive(Debug, RustcDecodable)]
+struct Args {
+    flag_verbose: isize,
+    cmd_create: bool,
+    arg_output: String,
+    flag_config: Vec<String>,
+    flag_known_hosts: Vec<String>,
+}
 
 #[derive(Debug, PartialEq)]
 struct Host {
@@ -119,15 +123,11 @@ fn create_config_entries<'a>(pathname: &Path) -> Result<Vec<Host>, Error>{
             protocols = annotated[1].split(",").collect();
         }
 
-        let items: Vec<String> = annotated[0].split_whitespace().map(|s| s.to_lowercase()).collect();
-        let matchable_items: Vec<&str> = items.iter().map(|s| s.as_str()).collect();
-        match matchable_items.as_slice() {
-            &["host", ref host_entries..] => {
-                for proto in protocols.iter() {
-                    hosts.extend(host_entries.into_iter().map(|name| Host::new(name, proto)))
-                }
-            },
-            _ => {}
+        if annotated[0].to_lowercase().starts_with("host") {
+            let host_entries: Vec<&str> = annotated[0].split_whitespace().skip(1).collect();
+            for proto in protocols.iter() {
+                hosts.extend(host_entries.as_slice().into_iter().map(|name| Host::new(name, proto)))
+            }
         }
     }
     Ok(hosts)
@@ -170,7 +170,9 @@ fn create_known_hosts_entries<'a>(pathname: &Path) -> Result<Vec<Host>, Error>{
 }
 
 fn main() {
-    let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
+    let args: Args = Docopt::new(USAGE)
+                            .and_then(|d| d.decode())
+                            .unwrap_or_else(|e| e.exit());
     if args.cmd_create {
         let mut hosts: Vec<Host> = args.flag_known_hosts.iter().flat_map (|kh| {
             create_known_hosts_entries(Path::new(kh)).unwrap()
