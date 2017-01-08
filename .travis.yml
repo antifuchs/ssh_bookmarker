@@ -1,0 +1,75 @@
+dist: trusty
+language: rust
+sudo: required
+
+# TODO This is the Rust channel that build jobs will use by default but can be
+# overridden on a case by case basis down below
+rust: stable
+
+os:
+  - osx
+
+env:
+  global:
+    - CRATE_NAME=ssh_bookmarker
+    - DEPLOY_VERSION=stable
+    - TARGET=x86_64-apple-darwin
+
+matrix:
+  # TODO These are all the build jobs. Adjust as necessary. Comment out what you
+  # don't need
+  include:
+    # More OSX
+    - env: TARGET=i686-apple-darwin
+      os: osx
+
+    # Testing other channels
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      rust: nightly
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      rust: beta
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      rust: 1.13.0
+
+install:
+  - sh ci/install.sh
+  - source ~/.cargo/env || true
+
+script:
+  - bash ci/script.sh
+
+before_deploy:
+  - sh ci/before_deploy.sh
+
+deploy:
+  # TODO update `api_key.secure`
+  # - Create a `public_repo` GitHub token. Go to: https://github.com/settings/tokens/new
+  # - Encrypt it: `travis encrypt GH_TOKEN=0123456789012345678901234567890123456789`
+  # - Paste the output down here
+  api_key:
+    secure: "iHlLuEJ72VbRHTcREFPB0YO4qqmptAOuEm1X0hlWCAiAdCRhNxeR0mHbtsh7U2REiw95FMyi65DynIYL6sib2Lvvxoaf1rC6TuzRGYzBHjl0TCV/pU6THmsvWibINaWXKCTOSYjTvSa8osVD3b+a6Gn2op0TJMBvTAqgkSUuBS0="
+  file_glob: true
+  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+  on:
+    condition: $TRAVIS_RUST_VERSION = $DEPLOY_VERSION
+    tags: true
+  provider: releases
+  skip_cleanup: true
+
+cache: cargo
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.cargo
+
+branches:
+  only:
+    # release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
+
+notifications:
+  email:
+    on_success: never

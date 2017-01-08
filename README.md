@@ -9,7 +9,7 @@ Terminal (to type SSH)!
 
 ## Installation
 
-You'll need Rust 1.10 or later, and cargo.
+You'll need Rust 1.13 or later, and cargo.
 
 ### Installing from crates.io:
 
