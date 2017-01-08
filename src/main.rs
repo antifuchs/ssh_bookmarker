@@ -19,6 +19,7 @@ Create SSH bookmarks from known_hosts and ssh_config files.
 
 Usage:
   ssh_bookmarker create [-v...] [-c FILE...] [-k FILE...] <output>
+  ssh_bookmarker --help
 
 Options:
   -h --help              Show this screen.
