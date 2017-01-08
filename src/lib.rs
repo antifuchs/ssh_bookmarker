@@ -1,32 +1,15 @@
 pub mod ssh_config;
 pub mod known_hosts;
+pub mod errors;
 
-#[macro_use] extern crate quick_error;
+#[macro_use] extern crate error_chain;
 
 use std::path::{Path, PathBuf};
-use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        KnownHostFormat(path: PathBuf, lineno: usize, line: String) {
-            // context(path: &'a Path, lineno: usize, line: &'a str)
-            //     -> (path.to_path_buf(), lineno, line.to_string())
-            display("{} line {}: {:?}", path.to_str().unwrap_or("(unprintable path)"), lineno, line)
-        }
-        NameError(name: String, protocol: String) {
-            display("{} with protocol {} would result in a bad filename", name, protocol)
-        }
-        IO(err: io::Error) {
-            from()
-                cause(err)
-                description("Couldn't read from file")
-        }
-    }
-}
+use errors::*;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Host {
@@ -49,13 +32,13 @@ impl Host {
         }
     }
 
-    pub fn write_bookmark(&self, dir: &Path) -> Result<(), Error> {
+    pub fn write_bookmark(&self, dir: &Path) -> Result<()> {
         let name = format!("{} ({}).webloc", self.name, self.protocol);
         let namepart = Path::new(&name);
 
         let mut path = PathBuf::from(dir);
         if namepart.is_absolute() {
-            return Err(Error::NameError(self.name.to_string(), self.protocol.to_string()));
+            bail!(ErrorKind::NameError(self.name.to_string(), self.protocol.to_string()));
         }
         path.push(namepart);
 
@@ -82,16 +65,16 @@ impl Host {
 pub trait ConfigFile {
     fn pathname<'a>(&'a self) -> &'a Path;
 
-    fn parse_entries<R: BufRead>(&self, r: R) -> Result<Vec<Host>, Error>;
+    fn parse_entries<R: BufRead>(&self, r: R) -> Result<Vec<Host>>;
 
-    fn entries(&self) -> Result<Vec<Host>, Error> {
+    fn entries(&self) -> Result<Vec<Host>> {
         let f = try!(File::open(self.pathname()));
         let file = BufReader::new(&f);
         self.parse_entries(file)
     }
 }
 
-pub fn process<T>(pathnames: Vec<String>) -> Result<Vec<Host>, Error>
+pub fn process<T>(pathnames: Vec<String>) -> Result<Vec<Host>>
     where T: From<PathBuf> + ConfigFile {
 
     let mut hosts: Vec<Host> = vec![];

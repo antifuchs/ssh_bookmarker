@@ -1,12 +1,16 @@
 extern crate rustc_serialize;
 extern crate docopt;
 extern crate ssh_bookmarker;
+#[macro_use]
+extern crate error_chain;
 
 use std::path::Path;
 use docopt::Docopt;
 
 use ssh_bookmarker::process;
 use ssh_bookmarker::{ssh_config, known_hosts};
+
+use ssh_bookmarker::errors::*;
 
 // use quick_error::ResultExt;
 
@@ -32,33 +36,31 @@ struct Args {
     flag_known_hosts: Vec<String>,
 }
 
-fn main() {
+quick_main!(run);
+fn run() -> Result<()> {
     let args: Args = Docopt::new(USAGE)
-                            .and_then(|d| d.decode())
-                            .unwrap_or_else(|e| e.exit());
+        .and_then(|d| d.decode())
+        .unwrap_or_else(|e| e.exit());
     if args.cmd_create {
-        let mut hosts = process::<known_hosts::KnownHosts>(args.flag_known_hosts).unwrap();
-        hosts.extend(process::<ssh_config::SSHConfigFile>(args.flag_config).unwrap());
+        let mut hosts = process::<known_hosts::KnownHosts>(args.flag_known_hosts)?;
+        hosts.extend(process::<ssh_config::SSHConfigFile>(args.flag_config)?);
         hosts.sort();
         hosts.dedup();
 
         let output = Path::new(&args.arg_output);
-        match std::fs::remove_dir_all(output) {
-            Ok(()) => {},
-            Err(e) => {
-                if e.kind() != std::io::ErrorKind::NotFound {
-                    panic!("Could not clear output directory: {}", e)
-                }
-            }
-        }
-        std::fs::create_dir_all(output).unwrap();
+        std::fs::remove_dir_all(output)
+            .chain_err(|| format!("Could not clear output directory {:?}", output))?;
+        std::fs::create_dir_all(output)
+            .chain_err(|| format!("Couldn't re-create output directory {:?}", output))?;
+
         for kh in hosts {
             if kh.ineligible() {
                 continue;
             }
-            kh.write_bookmark(output).unwrap();
+            kh.write_bookmark(output).chain_err(|| format!("Couldn't write bookmark {:?}", kh))?;
         }
+        Ok(())
     } else {
-        panic!("I don't understand what {:?} should do", args)
+        bail!("Don't know what to do!");
     }
 }

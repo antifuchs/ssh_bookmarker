@@ -11,4 +11,4 @@ keywords = ["macos", "ssh", "launchagent", "terminal"]
 [dependencies]
 docopt = "0.6"
 rustc-serialize = "0.3"  # if you're using `derive(RustcDecodable)`
-quick-error = "1.1.0"
+error-chain = "0.7.2"

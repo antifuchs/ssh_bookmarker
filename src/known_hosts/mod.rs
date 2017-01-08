@@ -1,4 +1,5 @@
-use ::{Host, ConfigFile, Error};
+use ::{Host, ConfigFile};
+use errors::*;
 use std::path::{Path, PathBuf};
 use std::io::prelude::*;
 
@@ -19,7 +20,7 @@ impl ConfigFile for KnownHosts {
         self.pathname.as_path()
     }
 
-    fn parse_entries<R: BufRead>(&self, file: R) -> Result<Vec<Host>, Error> {
+    fn parse_entries<R: BufRead>(&self, file: R) -> Result<Vec<Host>> {
         let mut hosts: Vec<Host> = vec!();
         for (lineno, maybe_line) in file.lines().enumerate() {
             let line = try!(maybe_line);
@@ -30,7 +31,7 @@ impl ConfigFile for KnownHosts {
 }
 
 
-fn process_entry(pathname: &Path, lineno: usize, line: &str) -> Result<Vec<Host>, Error> {
+fn process_entry(pathname: &Path, lineno: usize, line: &str) -> Result<Vec<Host>> {
     let mut hosts: Vec<Host> = vec!();
     let line = line.trim();
     // Skip comments or blank lines:
@@ -39,10 +40,10 @@ fn process_entry(pathname: &Path, lineno: usize, line: &str) -> Result<Vec<Host>
     }
 
     let mut items = line.split_whitespace();
-    let mut host_item = try!(items.next().ok_or(Error::KnownHostFormat(pathname.to_path_buf(), lineno, line.to_string())));
+    let mut host_item = try!(items.next().ok_or(ErrorKind::KnownHostFormat(pathname.to_path_buf(), lineno, line.to_string())));
     if host_item.starts_with('@') {
         // the hosts list is the next item if the first is a marker
-        host_item = try!(items.next().ok_or(Error::KnownHostFormat(pathname.to_path_buf(), lineno, line.to_string())));
+        host_item = try!(items.next().ok_or(ErrorKind::KnownHostFormat(pathname.to_path_buf(), lineno, line.to_string())));
     }
     if host_item.starts_with('|') {
         // hashed hosts can't be processed meaningfully, so don't do anything:

@@ -1,4 +1,5 @@
-use ::{Host, ConfigFile, Error};
+use ::{Host, ConfigFile};
+use errors::*;
 use std::path::{Path, PathBuf};
 use std::io::prelude::*;
 
@@ -19,7 +20,7 @@ impl ConfigFile for SSHConfigFile {
         self.pathname.as_path()
     }
 
-    fn parse_entries<R: BufRead>(&self, file: R) -> Result<Vec<Host>, Error> {
+    fn parse_entries<R: BufRead>(&self, file: R) -> Result<Vec<Host>> {
         let mut hosts: Vec<Host> = vec!();
         for maybe_line in file.lines() {
             let line = try!(maybe_line);
