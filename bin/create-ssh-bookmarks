@@ -1,8 +1,0 @@
-#!/usr/bin/env ruby
-
-require 'rubygems'
-require 'ssh_bookmarker'
-
-cli = SSHBookmarker::CLI.new
-cli.parse_options
-cli.run
