@@ -1,0 +1,14 @@
+[package]
+name = "ssh_bookmarker"
+version = "1.0.0"
+authors = ["Andreas Fuchs <asf@boinkor.net>"]
+license = "MIT"
+description = "A tool that lets you automatically generate SSH bookmarks under macOS"
+repository = "https://github.com/antifuchs/ssh_bookmarker"
+
+keywords = ["macos", "ssh", "launchagent", "terminal"]
+
+[dependencies]
+docopt = "0.6"
+rustc-serialize = "0.3"  # if you're using `derive(RustcDecodable)`
+error-chain = "0.7.2"
