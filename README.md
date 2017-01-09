@@ -26,3 +26,25 @@ SSH bookmarks in a specific directory. Specify SSH config file
 locations with `-c` and known_host files with `-k` (There are no
 defaults for file locations, so you'll have to specify them all
 yourself).
+
+### Watching your SSH config files
+
+You can use `ssh_bookmarker launchagent` with the same options as you
+would `create` to create a LaunchAgent definition. The agent will
+watch all the SSH config and known_hosts files you specify, and invoke
+the ssh_bookmarker program every time launchd detects changes. Here's
+an example:
+
+``` sh
+$ mkdir -p ~/Library/LaunchAgents
+$ ssh_bookmarker launchagent \
+  -c /etc/ssh/ssh_config -c ~/.ssh/config \
+  -k /etc/ssh/ssh_known_hosts -k ~/.ssh/known_hosts \
+  ~/Library/"SSH Locations" > ~/Library/LaunchAgents/net.boinkor.ssh-bookmarker.plist
+
+$ launchctl unload ~/Library/LaunchAgents/net.boinkor.ssh-bookmarker.plist ; launchctl load ~/Library/LaunchAgents/net.boinkor.ssh-bookmarker.plist
+```
+
+Now, all the files in `~/Library/SSH Locations` should be re-created
+whenever `~/.ssh/config` or `/etc/ssh/ssh_known_hosts` or any of the
+other files listed change.

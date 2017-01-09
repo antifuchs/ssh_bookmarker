@@ -9,6 +9,7 @@ use docopt::Docopt;
 
 use ssh_bookmarker::process;
 use ssh_bookmarker::{ssh_config, known_hosts};
+use ssh_bookmarker::launchagent;
 
 use ssh_bookmarker::errors::*;
 
@@ -19,6 +20,7 @@ Create SSH bookmarks from known_hosts and ssh_config files.
 
 Usage:
   ssh_bookmarker create [-v...] [-c FILE...] [-k FILE...] <output>
+  ssh_bookmarker launchagent [-c FILE...] [-k FILE...] <output>
   ssh_bookmarker --help
 
 Options:
@@ -32,6 +34,7 @@ Options:
 struct Args {
     flag_verbose: isize,
     cmd_create: bool,
+    cmd_launchagent: bool,
     arg_output: String,
     flag_config: Vec<String>,
     flag_known_hosts: Vec<String>,
@@ -60,6 +63,9 @@ fn run() -> Result<()> {
             }
             kh.write_bookmark(output).chain_err(|| format!("Couldn't write bookmark {:?}", kh))?;
         }
+        Ok(())
+    } else if args.cmd_launchagent {
+        println!("{}", launchagent::create(args.flag_config, args.flag_known_hosts, args.arg_output)?);
         Ok(())
     } else {
         bail!("Don't know what to do!");

@@ -1,5 +1,6 @@
 pub mod ssh_config;
 pub mod known_hosts;
+pub mod launchagent;
 pub mod errors;
 
 #[macro_use] extern crate error_chain;
