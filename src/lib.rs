@@ -98,7 +98,10 @@ pub fn process<T>(pathnames: Vec<String>) -> Result<Vec<Host>, Error>
     for pn in pathnames {
         let path = PathBuf::from(pn);
         let file = T::from(path);
-        hosts.extend(try!(file.entries()));
+        match file.entries() {
+            Ok(entries) => hosts.extend(entries),
+            Err(e) => println!("Could not read config file {:?} ({}), continuing", file.pathname(), e)
+        }
     }
     Ok(hosts)
 }
