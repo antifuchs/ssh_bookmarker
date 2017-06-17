@@ -41,14 +41,6 @@ impl Condition {
                 .chain_err(|| "could not parse the host regex")?);
         Ok((path, cond))
     }
-
-    pub fn should_include(&self, host: &str) -> bool {
-        match self {
-            &Condition::Everything => true,
-            &Condition::Include(ref pat) => pat.is_match(host),
-            &Condition::Exclude(ref pat) => !pat.is_match(host),
-        }
-    }
 }
 
 pub struct Conditions {
@@ -65,6 +57,36 @@ impl Conditions {
     pub fn add(&mut self, path: PathBuf, cond: Condition) {
         let v = self.map.entry(path).or_insert(vec![]);
         v.push(cond);
+    }
+
+    pub fn eligible(&self, host: &Host) -> bool {
+        let mut default = true;
+        match self.map.get(&host.from) {
+            None => {
+                return true;
+            }
+            Some(conds) => {
+                for cond in conds.into_iter() {
+                    match cond {
+                        &Condition::Everything => {
+                            return true;
+                        }
+                        &Condition::Include(ref pat) => {
+                            if pat.is_match(&host.name) {
+                                return true;
+                            }
+                            default = false;
+                        }
+                        &Condition::Exclude(ref pat) => {
+                            if pat.is_match(&host.name) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return default;
     }
 }
 
@@ -117,8 +139,8 @@ impl Host {
         Ok(())
     }
 
-    pub fn ineligible(&self) -> bool {
-        self.name.contains('*') || self.name.contains('?')
+    pub fn ineligible(&self, conds: &Conditions) -> bool {
+        self.name.contains('*') || self.name.contains('?') || !conds.eligible(self)
     }
 }
 
@@ -166,16 +188,46 @@ fn test_host_creation() {
 #[test]
 fn test_host_eligibility() {
     let from = Path::new("/dev/null");
-    assert_eq!(Host::named("foo*.oink.example.com", from).ineligible(), true);
-    assert_eq!(Host::named("*", from).ineligible(), true);
+    let conds = Conditions::new();
+    assert_eq!(Host::named("foo*.oink.example.com", from).ineligible(&conds), true);
+    assert_eq!(Host::named("*", from).ineligible(&conds), true);
 
-    assert_eq!(Host::named("foobar.oink.example.com", from).ineligible(), false);
+    assert_eq!(Host::named("foobar.oink.example.com", from).ineligible(&conds), false);
 }
 
 #[test]
-fn test_condition_match() {
-    let host = "foo.bar.com";
-    assert!(Condition::Include(Regex::new(r"^foo\..*\.com$").unwrap()).should_include(host));
-    assert!(!Condition::Exclude(Regex::new(r"^foo\..*\.com$").unwrap()).should_include(host));
-    assert!(Condition::Everything.should_include(host));
+fn test_conditions_match() {
+    let from = Path::new("/dev/null");
+    let host = Host::named("foo.bar.com", from);
+
+    // empty conditions means the host goes in:
+    {
+        let conds = Conditions::new();
+        assert!(conds.eligible(&host));
+    }
+    // An include for the host means the host goes in:
+    {
+        let mut conds = Conditions::new();
+        conds.add(from.to_path_buf(), Condition::Include(Regex::new(r"^foo\.").unwrap()));
+        assert!(conds.eligible(&host));
+    }
+    // An exclude for the host means the host is not included:
+    {
+        let mut conds = Conditions::new();
+        conds.add(from.to_path_buf(), Condition::Exclude(Regex::new(r"^foo\.").unwrap()));
+        assert!(!conds.eligible(&host));
+    }
+    // An exclude for another host means the host is in:
+    {
+        let mut conds = Conditions::new();
+        conds.add(from.to_path_buf(), Condition::Exclude(Regex::new(r"^baz\.").unwrap()));
+        assert!(conds.eligible(&host));
+    }
+    // An exclude and an include that both don't match mean that the host is not included:
+    {
+        let mut conds = Conditions::new();
+        conds.add(from.to_path_buf(), Condition::Exclude(Regex::new(r"^baz\.").unwrap()));
+        conds.add(from.to_path_buf(), Condition::Include(Regex::new(r"^qux\.").unwrap()));
+        assert!(!conds.eligible(&host));
+    }
 }
