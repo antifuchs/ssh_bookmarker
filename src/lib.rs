@@ -16,20 +16,23 @@ use errors::*;
 pub struct Host {
     name: String,
     protocol: String,
+    from: PathBuf,
 }
 
 impl Host {
-    pub fn new(name: &str, protocol: &str) -> Host {
+    pub fn new(name: &str, protocol: &str, from: &Path) -> Host {
         Host{
             name: name.to_string(),
             protocol: protocol.to_string(),
+            from: from.to_path_buf(),
         }
     }
 
-    pub fn named(name: &str) -> Host {
+    pub fn named(name: &str, from: &Path) -> Host {
         Host{
             name: name.to_string(),
             protocol: "ssh".to_string(),
+            from: from.to_path_buf(),
         }
     }
 
@@ -92,19 +95,23 @@ pub fn process<T>(pathnames: Vec<String>) -> Result<Vec<Host>>
 
 #[test]
 fn test_host_creation() {
-    let ohai = Host::named("ohai");
+    let from = Path::new("/dev/null");
+    let ohai = Host::named("ohai", from);
     assert_eq!(ohai.name, "ohai");
     assert_eq!(ohai.protocol, "ssh");
+    assert_eq!(ohai.from, from);
 
-    let mosh_ohai = Host::new("ohai", "mosh");
+    let mosh_ohai = Host::new("ohai", "mosh", from);
     assert_eq!(mosh_ohai.name, "ohai");
     assert_eq!(mosh_ohai.protocol, "mosh");
+    assert_eq!(mosh_ohai.from, from);
 }
 
 #[test]
 fn test_host_eligibility() {
-    assert_eq!(Host::named("foo*.oink.example.com").ineligible(), true);
-    assert_eq!(Host::named("*").ineligible(), true);
+    let from = Path::new("/dev/null");
+    assert_eq!(Host::named("foo*.oink.example.com", from).ineligible(), true);
+    assert_eq!(Host::named("*", from).ineligible(), true);
 
-    assert_eq!(Host::named("foobar.oink.example.com").ineligible(), false);
+    assert_eq!(Host::named("foobar.oink.example.com", from).ineligible(), false);
 }

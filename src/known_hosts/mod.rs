@@ -50,29 +50,30 @@ fn process_entry(pathname: &Path, lineno: usize, line: &str) -> Result<Vec<Host>
         return Ok(vec![]);
     }
     for host in host_item.split(',') {
-        hosts.push(Host::named(host));
+        hosts.push(Host::named(host, pathname));
     }
     Ok(hosts)
 }
 
 #[test]
 fn test_known_hosts_entry() {
+    let from = Path::new("/dev/null");
     let no_hosts: Vec<Host> = vec![];
-    let comment: Vec<Host> = process_entry(Path::new("/dev/null"), 0, "# Comments allowed at start of line").unwrap();
+    let comment: Vec<Host> = process_entry(from, 0, "# Comments allowed at start of line").unwrap();
     assert_eq!(no_hosts, comment);
 
     let empty: Vec<Host> = process_entry(Path::new("/dev/null"), 0, "    ").unwrap();
     assert_eq!(no_hosts, empty);
 
-    let multiple: Vec<Host> = process_entry(Path::new("/dev/null"), 0, "closenet,closenet.example.net,192.0.2.53 1024 37 159...93 closenet.example.net ").unwrap();
-    let expected_multiple: Vec<Host> = vec![Host::named("closenet"), Host::named("closenet.example.net"), Host::named("192.0.2.53")];
+    let multiple: Vec<Host> = process_entry(from, 0, "closenet,closenet.example.net,192.0.2.53 1024 37 159...93 closenet.example.net ").unwrap();
+    let expected_multiple: Vec<Host> = vec![Host::named("closenet", from), Host::named("closenet.example.net", from), Host::named("192.0.2.53", from)];
     assert_eq!(multiple, expected_multiple);
 
-    let annotated: Vec<Host> = process_entry(Path::new("/dev/null"), 0, "@revoked something ssh-rsa AAAAB5W...").unwrap();
-    let expected_annotated: Vec<Host> = vec![Host::named("something")];
+    let annotated: Vec<Host> = process_entry(from, 0, "@revoked something ssh-rsa AAAAB5W...").unwrap();
+    let expected_annotated: Vec<Host> = vec![Host::named("something", from)];
     assert_eq!(annotated, expected_annotated);
 
-    let hashed: Vec<Host> = process_entry(Path::new("/dev/null"), 0, "|1|JfKTdBh7rNbXkVAQCRp4OQoPfmI=|USECr3SWf1JUPsms5AqfD5QfxkM= ssh-rsa AAAAB5W...").unwrap();
+    let hashed: Vec<Host> = process_entry(from, 0, "|1|JfKTdBh7rNbXkVAQCRp4OQoPfmI=|USECr3SWf1JUPsms5AqfD5QfxkM= ssh-rsa AAAAB5W...").unwrap();
     let expected_hashed: Vec<Host> = vec![];
     assert_eq!(hashed, expected_hashed);
 }

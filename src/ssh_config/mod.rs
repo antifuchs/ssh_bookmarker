@@ -40,7 +40,7 @@ impl ConfigFile for SSHConfigFile {
             if annotated[0].to_lowercase().starts_with("host") {
                 let host_entries: Vec<&str> = annotated[0].split_whitespace().skip(1).collect();
                 for proto in protocols.iter() {
-                    hosts.extend(host_entries.as_slice().into_iter().map(|name| Host::new(name, proto)))
+                    hosts.extend(host_entries.as_slice().into_iter().map(|name| Host::new(name, proto, self.pathname())))
                 }
             }
         }
