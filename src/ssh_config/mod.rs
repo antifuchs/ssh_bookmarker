@@ -1,3 +1,5 @@
+extern crate regex;
+
 use ::{Host, ConfigFile};
 use errors::*;
 use std::path::{Path, PathBuf};

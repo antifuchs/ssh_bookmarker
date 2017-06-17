@@ -1,3 +1,5 @@
+extern crate regex;
+
 pub mod ssh_config;
 pub mod known_hosts;
 pub mod launchagent;
@@ -5,12 +7,66 @@ pub mod errors;
 
 #[macro_use] extern crate error_chain;
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
 
 use errors::*;
+
+use regex::Regex;
+
+pub enum Condition {
+    Include(Regex),
+    Exclude(Regex),
+    Everything, // TODO: do we need this?
+}
+
+impl Condition {
+    pub fn exclude_from(spec: &str) -> Result<(PathBuf, Condition)> {
+        let mut split = spec.splitn(2, ',');
+        let path = PathBuf::from(split.next().ok_or(ErrorKind::ConditionFormat(spec.to_string()))?);
+        let cond = Condition::Exclude(
+            Regex::new(split.next().ok_or(ErrorKind::ConditionFormat(spec.to_string()))?)
+                .chain_err(|| "could not parse the host regex")?);
+        Ok((path, cond))
+    }
+
+    pub fn include_from(spec: &str) -> Result<(PathBuf, Condition)> {
+        let mut split = spec.splitn(2, ',');
+        let path = PathBuf::from(split.next().ok_or(ErrorKind::ConditionFormat(spec.to_string()))?);
+        let cond = Condition::Include(
+            Regex::new(split.next().ok_or(ErrorKind::ConditionFormat(spec.to_string()))?)
+                .chain_err(|| "could not parse the host regex")?);
+        Ok((path, cond))
+    }
+
+    pub fn should_include(&self, host: &str) -> bool {
+        match self {
+            &Condition::Everything => true,
+            &Condition::Include(ref pat) => pat.is_match(host),
+            &Condition::Exclude(ref pat) => !pat.is_match(host),
+        }
+    }
+}
+
+pub struct Conditions {
+    map: HashMap<PathBuf, Vec<Condition>>,
+}
+
+impl Conditions {
+    pub fn new() -> Conditions {
+        Conditions{
+            map: HashMap::new(),
+        }
+    }
+
+    pub fn add(&mut self, path: PathBuf, cond: Condition) {
+        let v = self.map.entry(path).or_insert(vec![]);
+        v.push(cond);
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Host {
@@ -114,4 +170,12 @@ fn test_host_eligibility() {
     assert_eq!(Host::named("*", from).ineligible(), true);
 
     assert_eq!(Host::named("foobar.oink.example.com", from).ineligible(), false);
+}
+
+#[test]
+fn test_condition_match() {
+    let host = "foo.bar.com";
+    assert!(Condition::Include(Regex::new(r"^foo\..*\.com$").unwrap()).should_include(host));
+    assert!(!Condition::Exclude(Regex::new(r"^foo\..*\.com$").unwrap()).should_include(host));
+    assert!(Condition::Everything.should_include(host));
 }
