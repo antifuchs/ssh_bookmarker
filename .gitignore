@@ -17,3 +17,5 @@ test/version_tmp
 tmp
 target
 _CodeSignature
+.DS_Store
+SSH.lbaction.zip
