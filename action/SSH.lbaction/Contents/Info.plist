@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIconFile</key>
+	<string>font-awesome:terminal</string>
+	<key>CFBundleIdentifier</key>
+	<string>net.boinkor.launchbar.ssh-to</string>
+	<key>CFBundleName</key>
+	<string>SSH</string>
+	<key>CFBundleVersion</key>
+	<string>0.1.0</string>
+	<key>LBAbbreviation</key>
+	<string>SSH</string>
+	<key>LBArgument</key>
+	<string>text</string>
+	<key>LBDescription</key>
+	<dict>
+		<key>LBArgument</key>
+		<string>text</string>
+		<key>LBAuthor</key>
+		<string>Andreas Fuchs</string>
+		<key>LBEmail</key>
+		<string>asf@boinkor.net</string>
+		<key>LBSummary</key>
+		<string>This action opens a terminal (or iTerm) window for the ssh:// URL entered, with autocomplete based on the contents of your ~/.ssh/config and known_host files.</string>
+		<key>LBTwitter</key>
+		<string>antifuchs</string>
+		<key>LBWebsiteURL</key>
+		<string>https://boinkor.net</string>
+	</dict>
+	<key>LBScripts</key>
+	<dict>
+		<key>LBDefaultScript</key>
+		<dict>
+			<key>LBAcceptedArgumentTypes</key>
+			<array>
+				<string>string</string>
+			</array>
+			<key>LBAllowsInstantReuseOfLastTextInputString</key>
+			<true/>
+			<key>LBRequiresArgument</key>
+			<true/>
+			<key>LBResultType</key>
+			<string>string</string>
+			<key>LBRunInBackground</key>
+			<true/>
+			<key>LBScriptName</key>
+			<string>default.js</string>
+		</dict>
+		<key>LBSuggestionsScript</key>
+		<dict>
+			<key>LBAcceptedArgumentTypes</key>
+			<array>
+				<string>string</string>
+			</array>
+			<key>LBKeepWindowActive</key>
+			<true/>
+			<key>LBLiveFeedbackEnabled</key>
+			<true/>
+			<key>LBRequiresArgument</key>
+			<true/>
+			<key>LBResultType</key>
+			<string>unknown</string>
+			<key>LBReturnsResult</key>
+			<true/>
+			<key>LBScriptName</key>
+			<string>suggestions.rb</string>
+		</dict>
+	</dict>
+	<key>LBTextInputTitle</key>
+	<string>SSH to...</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>(c) 2017 Andreas Fuchs &lt;asf@boinkor.net&gt;</string>
+</dict>
+</plist>
