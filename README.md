@@ -7,6 +7,14 @@ config changes. Include the output dir in your LaunchBar / QuickSilver
 / Alfred config, and you can SSH into hosts without even opening
 Terminal (to type SSH)!
 
+## High Sierra compatibility warning
+
+*MacOS High Sierra does not allow you to use `ssh://` URLs in .webloc files!*
+
+If you use this tool together with LaunchBar, I have created an Action
+extension for it that you can find
+in [the action subdir of this repo](action/)
+
 ## Installation
 
 You'll need Rust 1.13 or later, and cargo.
