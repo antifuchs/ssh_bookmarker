@@ -120,10 +120,11 @@ class Entry
 
   def to_h
     {
-      title: host,
-      url: "#{url_scheme}://#{host}",
+      title: "#{url_scheme}://#{host}",
+      label: host,
+      actionRunsInBackground: true,
       badge: url_scheme,
-      icon: 'font-awesome:terminal'
+      icon: 'font-awesome:terminal',
     }
   end
 
