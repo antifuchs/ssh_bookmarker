@@ -19,3 +19,4 @@ target
 _CodeSignature
 .DS_Store
 SSH.lbaction.zip
+.tern-port
