@@ -118,6 +118,14 @@ class Entry
     @position = position
   end
 
+  def eql?(other)
+    other.host == self.host && other.url_scheme == self.url_scheme
+  end
+
+  def hash
+    [host, url_scheme].hash
+  end
+
   def to_h
     {
       title: "#{url_scheme}://#{host}",
