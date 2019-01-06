@@ -105,7 +105,7 @@ impl Conditions {
                 }
             }
         }
-        return default;
+        default
     }
 }
 
