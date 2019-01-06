@@ -8,6 +8,10 @@ repository = "https://github.com/antifuchs/ssh_bookmarker"
 
 keywords = ["macos", "ssh", "launchagent", "terminal"]
 
+[badges]
+circle-ci = { repository = "antifuchs/ssh_bookmarker", branch = "master" }
+maintenance = { status = "passively-maintained" }
+
 [dependencies]
 docopt = "0.6"
 rustc-serialize = "0.3"  # if you're using `derive(RustcDecodable)`
