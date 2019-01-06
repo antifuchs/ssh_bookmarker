@@ -1,17 +1,34 @@
+use errors::*;
 use std::env;
-use ::errors::*;
 
-pub fn create(configs: Vec<String>, known_hosts: Vec<String>, include: Vec<String>, exclude: Vec<String>, output: String) -> Result<String> {
-    let curr_exe = env::current_exe().
-        chain_err(|| "Couldn't determine the currently running program")?;
-    let exe = curr_exe.
-        to_str().ok_or("How did you get a non-unicodeable executable name?")?;
-    Ok(create_for_exe(exe, configs, known_hosts, include, exclude, output.as_str()))
+pub fn create(
+    configs: Vec<String>,
+    known_hosts: Vec<String>,
+    include: Vec<String>,
+    exclude: Vec<String>,
+    output: String,
+) -> Result<String> {
+    let curr_exe =
+        env::current_exe().chain_err(|| "Couldn't determine the currently running program")?;
+    let exe = curr_exe
+        .to_str()
+        .ok_or("How did you get a non-unicodeable executable name?")?;
+    Ok(create_for_exe(
+        exe,
+        configs,
+        known_hosts,
+        include,
+        exclude,
+        output.as_str(),
+    ))
 }
 
 fn command_lineify<'a>(prefix: &'a str, args: &[&'a str]) -> Vec<&'a str> {
     let prefix_iter = vec![prefix].into_iter().cycle();
-    prefix_iter.zip(args.into_iter()).flat_map(|(p, arg)| vec![p, arg]).collect()
+    prefix_iter
+        .zip(args.into_iter())
+        .flat_map(|(p, arg)| vec![p, arg])
+        .collect()
 }
 
 fn plist_stringify(args: &[&str]) -> String {
@@ -25,7 +42,14 @@ fn plist_stringify(args: &[&str]) -> String {
     }
 }
 
-fn create_for_exe(exe: &str, configs: Vec<String>, known_hosts: Vec<String>, include: Vec<String>, exclude: Vec<String>, output: &str) -> String {
+fn create_for_exe(
+    exe: &str,
+    configs: Vec<String>,
+    known_hosts: Vec<String>,
+    include: Vec<String>,
+    exclude: Vec<String>,
+    output: &str,
+) -> String {
     let configs: Vec<&str> = configs.iter().map(|&ref s| s.as_str()).collect();
     let config_slice = configs.as_slice();
     let known_hosts: Vec<&str> = known_hosts.iter().map(|&ref s| s.as_str()).collect();
@@ -69,13 +93,19 @@ fn create_for_exe(exe: &str, configs: Vec<String>, known_hosts: Vec<String>, inc
 
 #[test]
 fn test_command_lineify() {
-    let expected: Vec<String> = ["-c", "foo", "-c", "bar"].iter().map(|&s| s.into()).collect();
+    let expected: Vec<String> = ["-c", "foo", "-c", "bar"]
+        .iter()
+        .map(|&s| s.into())
+        .collect();
     assert_eq!(command_lineify("-c", &["foo", "bar"]), expected);
 }
 
 #[test]
 fn test_plist_stringify() {
-    assert_eq!(plist_stringify(&["foo", "bar"]), "<string>foo</string><string>bar</string>".to_string());
+    assert_eq!(
+        plist_stringify(&["foo", "bar"]),
+        "<string>foo</string><string>bar</string>".to_string()
+    );
     let empty: Vec<&str> = vec![];
     assert_eq!(plist_stringify(empty.as_slice()), "".to_string());
 }

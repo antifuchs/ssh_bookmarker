@@ -1,19 +1,17 @@
 extern crate regex;
 
-use ::{Host, ConfigFile};
 use errors::*;
-use std::path::{Path, PathBuf};
 use std::io::prelude::*;
+use std::path::{Path, PathBuf};
+use {ConfigFile, Host};
 
 pub struct SSHConfigFile {
-    pathname: PathBuf
+    pathname: PathBuf,
 }
 
 impl From<PathBuf> for SSHConfigFile {
     fn from(path: PathBuf) -> SSHConfigFile {
-        SSHConfigFile{
-            pathname: path
-        }
+        SSHConfigFile { pathname: path }
     }
 }
 
@@ -23,7 +21,7 @@ impl ConfigFile for SSHConfigFile {
     }
 
     fn parse_entries<R: BufRead>(&self, file: R) -> Result<Vec<Host>> {
-        let mut hosts: Vec<Host> = vec!();
+        let mut hosts: Vec<Host> = vec![];
         for maybe_line in file.lines() {
             let line = try!(maybe_line);
 
@@ -42,7 +40,12 @@ impl ConfigFile for SSHConfigFile {
             if annotated[0].to_lowercase().starts_with("host") {
                 let host_entries: Vec<&str> = annotated[0].split_whitespace().skip(1).collect();
                 for proto in protocols.iter() {
-                    hosts.extend(host_entries.as_slice().into_iter().map(|name| Host::new(name, proto, self.pathname())))
+                    hosts.extend(
+                        host_entries
+                            .as_slice()
+                            .into_iter()
+                            .map(|name| Host::new(name, proto, self.pathname())),
+                    )
                 }
             }
         }
