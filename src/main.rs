@@ -77,11 +77,11 @@ fn run() -> Result<()> {
         println!(
             "{}",
             launchagent::create(
-                args.flag_config,
-                args.flag_known_hosts,
-                args.flag_include,
-                args.flag_exclude,
-                args.arg_output
+                &args.flag_config,
+                &args.flag_known_hosts,
+                &args.flag_include,
+                &args.flag_exclude,
+                &args.arg_output
             )?
         );
         Ok(())

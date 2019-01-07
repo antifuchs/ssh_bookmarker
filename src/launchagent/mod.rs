@@ -2,11 +2,11 @@ use errors::*;
 use std::env;
 
 pub fn create(
-    configs: Vec<String>,
-    known_hosts: Vec<String>,
-    include: Vec<String>,
-    exclude: Vec<String>,
-    output: String,
+    configs: &[String],
+    known_hosts: &[String],
+    include: &[String],
+    exclude: &[String],
+    output: &str,
 ) -> Result<String> {
     let curr_exe =
         env::current_exe().chain_err(|| "Couldn't determine the currently running program")?;
@@ -19,7 +19,7 @@ pub fn create(
         known_hosts,
         include,
         exclude,
-        output.as_str(),
+        output,
     ))
 }
 
@@ -44,10 +44,10 @@ fn plist_stringify(args: &[&str]) -> String {
 
 fn create_for_exe(
     exe: &str,
-    configs: Vec<String>,
-    known_hosts: Vec<String>,
-    include: Vec<String>,
-    exclude: Vec<String>,
+    configs: &[String],
+    known_hosts: &[String],
+    include: &[String],
+    exclude: &[String],
     output: &str,
 ) -> String {
     let configs: Vec<&str> = configs.iter().map(|s| s.as_str()).collect();
@@ -112,7 +112,12 @@ fn test_plist_stringify() {
 
 #[test]
 fn test_create_for_exe() {
-    assert_eq!(create_for_exe("program", vec!["/etc/ssh/ssh_config".to_string()], vec!["/etc/ssh/ssh_known_hosts".to_string()], vec!["foo:bar".to_string()], vec!["baz:qux".to_string()], "/tmp/foo"),
+    let cfgs = vec!["/etc/ssh/ssh_config".to_string()];
+    let known_hosts = vec!["/etc/ssh/ssh_known_hosts".to_string()];
+    let include = vec!["foo:bar".to_string()];
+    let exclude = vec!["baz:qux".to_string()];
+
+    assert_eq!(create_for_exe("program", &cfgs, &known_hosts, &include, &exclude, "/tmp/foo"),
     r##"<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
