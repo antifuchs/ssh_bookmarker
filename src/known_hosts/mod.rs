@@ -14,7 +14,7 @@ impl From<PathBuf> for KnownHosts {
 }
 
 impl ConfigFile for KnownHosts {
-    fn pathname<'a>(&'a self) -> &'a Path {
+    fn pathname(&self) -> &Path {
         self.pathname.as_path()
     }
 
@@ -32,19 +32,19 @@ fn process_entry(pathname: &Path, lineno: usize, line: &str) -> Result<Vec<Host>
     let mut hosts: Vec<Host> = vec![];
     let line = line.trim();
     // Skip comments or blank lines:
-    if line.len() == 0 || line.starts_with('#') {
+    if line.is_empty() || line.starts_with('#') {
         return Ok(vec![]);
     }
 
     let mut items = line.split_whitespace();
-    let mut host_item = try!(items.next().ok_or(ErrorKind::KnownHostFormat(
+    let mut host_item = try!(items.next().ok_or_else(|| ErrorKind::KnownHostFormat(
         pathname.to_path_buf(),
         lineno,
         line.to_string()
     )));
     if host_item.starts_with('@') {
         // the hosts list is the next item if the first is a marker
-        host_item = try!(items.next().ok_or(ErrorKind::KnownHostFormat(
+        host_item = try!(items.next().ok_or_else(|| ErrorKind::KnownHostFormat(
             pathname.to_path_buf(),
             lineno,
             line.to_string()

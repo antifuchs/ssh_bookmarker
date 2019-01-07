@@ -16,7 +16,7 @@ use ssh_bookmarker::errors::*;
 
 // use quick_error::ResultExt;
 
-const USAGE: &'static str = "
+const USAGE: &str = "
 Create SSH bookmarks from known_hosts and ssh_config files.
 
 Usage:
@@ -91,7 +91,7 @@ fn run() -> Result<()> {
 }
 
 fn create_conditions(include: Vec<String>, exclude: Vec<String>) -> Result<Conditions> {
-    let mut conds = Conditions::new();
+    let mut conds = Conditions::default();
     for inc in include.into_iter() {
         let (pn, cond) = Condition::include_from(&inc)?;
         conds.add(pn, cond);

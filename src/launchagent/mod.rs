@@ -26,13 +26,13 @@ pub fn create(
 fn command_lineify<'a>(prefix: &'a str, args: &[&'a str]) -> Vec<&'a str> {
     let prefix_iter = vec![prefix].into_iter().cycle();
     prefix_iter
-        .zip(args.into_iter())
+        .zip(args.iter())
         .flat_map(|(p, arg)| vec![p, arg])
         .collect()
 }
 
 fn plist_stringify(args: &[&str]) -> String {
-    if args.len() > 0 {
+    if !args.is_empty() {
         let mut interspersed = String::from("<string>");
         interspersed.push_str(args.join("</string><string>").as_str());
         interspersed.push_str("</string>");
@@ -50,13 +50,13 @@ fn create_for_exe(
     exclude: Vec<String>,
     output: &str,
 ) -> String {
-    let configs: Vec<&str> = configs.iter().map(|&ref s| s.as_str()).collect();
+    let configs: Vec<&str> = configs.iter().map(|s| s.as_str()).collect();
     let config_slice = configs.as_slice();
-    let known_hosts: Vec<&str> = known_hosts.iter().map(|&ref s| s.as_str()).collect();
+    let known_hosts: Vec<&str> = known_hosts.iter().map(|s| s.as_str()).collect();
     let known_hosts_slice = known_hosts.as_slice();
-    let include: Vec<&str> = include.iter().map(|&ref s| s.as_str()).collect();
+    let include: Vec<&str> = include.iter().map(|s| s.as_str()).collect();
     let include_slice = include.as_slice();
-    let exclude: Vec<&str> = exclude.iter().map(|&ref s| s.as_str()).collect();
+    let exclude: Vec<&str> = exclude.iter().map(|s| s.as_str()).collect();
     let exclude_slice = exclude.as_slice();
 
     format!(r##"<?xml version="1.0" encoding="UTF-8"?>

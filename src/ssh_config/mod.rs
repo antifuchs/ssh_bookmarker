@@ -16,7 +16,7 @@ impl From<PathBuf> for SSHConfigFile {
 }
 
 impl ConfigFile for SSHConfigFile {
-    fn pathname<'a>(&'a self) -> &'a Path {
+    fn pathname(&self) -> &Path {
         self.pathname.as_path()
     }
 
@@ -27,14 +27,14 @@ impl ConfigFile for SSHConfigFile {
 
             let line = line.trim();
             // Skip comments or blank lines:
-            if line.len() == 0 || line.starts_with('#') {
+            if line.is_empty() || line.starts_with('#') {
                 continue;
             }
 
             let mut protocols: Vec<&str> = vec!["ssh"];
             let annotated: Vec<&str> = line.split("#:").collect();
             if annotated.len() > 1 {
-                protocols = annotated[1].split(",").collect();
+                protocols = annotated[1].split(',').collect();
             }
 
             if annotated[0].to_lowercase().starts_with("host") {
@@ -43,7 +43,7 @@ impl ConfigFile for SSHConfigFile {
                     hosts.extend(
                         host_entries
                             .as_slice()
-                            .into_iter()
+                            .iter()
                             .map(|name| Host::new(name, proto, self.pathname())),
                     )
                 }

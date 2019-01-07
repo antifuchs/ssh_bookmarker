@@ -30,13 +30,13 @@ impl Condition {
         let path = PathBuf::from(
             split
                 .next()
-                .ok_or(ErrorKind::ConditionFormat(spec.to_string()))?,
+                .ok_or_else(|| ErrorKind::ConditionFormat(spec.to_string()))?,
         );
         let cond = Condition::Exclude(
             Regex::new(
                 split
                     .next()
-                    .ok_or(ErrorKind::ConditionFormat(spec.to_string()))?,
+                    .ok_or_else(|| ErrorKind::ConditionFormat(spec.to_string()))?,
             )
             .chain_err(|| "could not parse the host regex")?,
         );
@@ -48,13 +48,13 @@ impl Condition {
         let path = PathBuf::from(
             split
                 .next()
-                .ok_or(ErrorKind::ConditionFormat(spec.to_string()))?,
+                .ok_or_else(|| ErrorKind::ConditionFormat(spec.to_string()))?,
         );
         let cond = Condition::Include(
             Regex::new(
                 split
                     .next()
-                    .ok_or(ErrorKind::ConditionFormat(spec.to_string()))?,
+                    .ok_or_else(|| ErrorKind::ConditionFormat(spec.to_string()))?,
             )
             .chain_err(|| "could not parse the host regex")?,
         );
@@ -62,19 +62,14 @@ impl Condition {
     }
 }
 
+#[derive(Default)]
 pub struct Conditions {
     map: HashMap<PathBuf, Vec<Condition>>,
 }
 
 impl Conditions {
-    pub fn new() -> Conditions {
-        Conditions {
-            map: HashMap::new(),
-        }
-    }
-
     pub fn add(&mut self, path: PathBuf, cond: Condition) {
-        let v = self.map.entry(path).or_insert(vec![]);
+        let v = self.map.entry(path).or_insert_with(|| vec![]);
         v.push(cond);
     }
 
@@ -85,18 +80,18 @@ impl Conditions {
                 return true;
             }
             Some(conds) => {
-                for cond in conds.into_iter() {
+                for cond in conds.iter() {
                     match cond {
-                        &Condition::Everything => {
+                        Condition::Everything => {
                             return true;
                         }
-                        &Condition::Include(ref pat) => {
+                        Condition::Include(ref pat) => {
                             if pat.is_match(&host.name) {
                                 return true;
                             }
                             default = false;
                         }
-                        &Condition::Exclude(ref pat) => {
+                        Condition::Exclude(ref pat) => {
                             if pat.is_match(&host.name) {
                                 return false;
                             }
@@ -167,7 +162,7 @@ impl Host {
 }
 
 pub trait ConfigFile {
-    fn pathname<'a>(&'a self) -> &'a Path;
+    fn pathname(&self) -> &Path;
 
     fn parse_entries<R: BufRead>(&self, r: R) -> Result<Vec<Host>>;
 
@@ -215,7 +210,7 @@ fn test_host_creation() {
 #[test]
 fn test_host_eligibility() {
     let from = Path::new("/dev/null");
-    let conds = Conditions::new();
+    let conds = Conditions::default();
     assert_eq!(
         Host::named("foo*.oink.example.com", from).ineligible(&conds),
         true
@@ -235,12 +230,12 @@ fn test_conditions_match() {
 
     // empty conditions means the host goes in:
     {
-        let conds = Conditions::new();
+        let conds = Conditions::default();
         assert!(conds.eligible(&host));
     }
     // An include for the host means the host goes in:
     {
-        let mut conds = Conditions::new();
+        let mut conds = Conditions::default();
         conds.add(
             from.to_path_buf(),
             Condition::Include(Regex::new(r"^foo\.").unwrap()),
@@ -249,7 +244,7 @@ fn test_conditions_match() {
     }
     // An exclude for the host means the host is not included:
     {
-        let mut conds = Conditions::new();
+        let mut conds = Conditions::default();
         conds.add(
             from.to_path_buf(),
             Condition::Exclude(Regex::new(r"^foo\.").unwrap()),
@@ -258,7 +253,7 @@ fn test_conditions_match() {
     }
     // An exclude for another host means the host is in:
     {
-        let mut conds = Conditions::new();
+        let mut conds = Conditions::default();
         conds.add(
             from.to_path_buf(),
             Condition::Exclude(Regex::new(r"^baz\.").unwrap()),
@@ -267,7 +262,7 @@ fn test_conditions_match() {
     }
     // An exclude and an include that both don't match mean that the host is not included:
     {
-        let mut conds = Conditions::new();
+        let mut conds = Conditions::default();
         conds.add(
             from.to_path_buf(),
             Condition::Exclude(Regex::new(r"^baz\.").unwrap()),
