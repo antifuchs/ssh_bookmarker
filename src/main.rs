@@ -1,22 +1,22 @@
-extern crate rustc_serialize;
 extern crate docopt;
+extern crate rustc_serialize;
 extern crate ssh_bookmarker;
 #[macro_use]
 extern crate error_chain;
 
-use std::path::Path;
 use docopt::Docopt;
+use std::path::Path;
 
-use ssh_bookmarker::{Condition, Conditions};
-use ssh_bookmarker::process;
-use ssh_bookmarker::{ssh_config, known_hosts};
 use ssh_bookmarker::launchagent;
+use ssh_bookmarker::process;
+use ssh_bookmarker::{known_hosts, ssh_config};
+use ssh_bookmarker::{Condition, Conditions};
 
 use ssh_bookmarker::errors::*;
 
 // use quick_error::ResultExt;
 
-const USAGE: &'static str = "
+const USAGE: &str = "
 Create SSH bookmarks from known_hosts and ssh_config files.
 
 Usage:
@@ -69,11 +69,21 @@ fn run() -> Result<()> {
             if kh.ineligible(&conds) {
                 continue;
             }
-            kh.write_bookmark(output).chain_err(|| format!("Couldn't write bookmark {:?}", kh))?;
+            kh.write_bookmark(output)
+                .chain_err(|| format!("Couldn't write bookmark {:?}", kh))?;
         }
         Ok(())
     } else if args.cmd_launchagent {
-        println!("{}", launchagent::create(args.flag_config, args.flag_known_hosts, args.flag_include, args.flag_exclude, args.arg_output)?);
+        println!(
+            "{}",
+            launchagent::create(
+                &args.flag_config,
+                &args.flag_known_hosts,
+                &args.flag_include,
+                &args.flag_exclude,
+                &args.arg_output
+            )?
+        );
         Ok(())
     } else {
         bail!("Don't know what to do!");
@@ -81,7 +91,7 @@ fn run() -> Result<()> {
 }
 
 fn create_conditions(include: Vec<String>, exclude: Vec<String>) -> Result<Conditions> {
-    let mut conds = Conditions::new();
+    let mut conds = Conditions::default();
     for inc in include.into_iter() {
         let (pn, cond) = Condition::include_from(&inc)?;
         conds.add(pn, cond);
